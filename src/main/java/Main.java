@@ -7,51 +7,49 @@ import java.util.*;
  */
 
 public class Main {
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
+    private static final String CSV_FILE_PATH = "D://airports.csv";
+
+    public static void main(String[] args) throws IOException {
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+
+        Map<String, List<List<?>>> hashMap = CsvReader.readCsvFile(CSV_FILE_PATH);
 
         while (true) {
             System.out.println("Please enter your filter: ");
-            String filter = scanner.nextLine();
+            String filter = reader.readLine();
             if (filter.startsWith("!quit")) {
                 break;
             }
             System.out.println("Please enter name airport: ");
-            String nameAirport = scanner.nextLine();
-
-            String csvFilePath = "D://airports.csv";
-            List<Object> data;
-            Map<String, List<List<Object>>> hashMap = CsvReader.readCsvFile("D://airports.csv");
-
+            String nameAirport = reader.readLine();
             int countGoodLine = 0;
-            HashMap<String, List<List<Object>>> solve = new HashMap<>();
+            List<List<?>> airportDataMap = new ArrayList<>();
             long startTime = System.currentTimeMillis();
-            for (Map.Entry<String, List<List<Object>>> entry : hashMap.entrySet()) {
-                String key = entry.getKey();
+            List<List<?>> rows = new ArrayList<>();
+            String key;
+            for (Map.Entry<String, List<List<?>>> entry : hashMap.entrySet()) {
+                key = entry.getKey();
                 if (key.replaceAll("\"", "").startsWith(nameAirport)) {
-                    List<List<Object>> rows = entry.getValue();
-                    if (filter.isEmpty()) {
-                        for (List<Object> row : rows) {
-                            ++countGoodLine;
-                            System.out.println(key + row);
-                        }
-                    } else {
-                        List<String> tokens = convertToRPN(filter);
-                        for (List<Object> row : rows) {
-                            if (Filter.evaluate(tokens, row)) {
-                                ++countGoodLine;
-                                if (!solve.containsKey(key)) {
-                                    solve.put(key, new ArrayList<>());
-                                }
-                                solve.get(key).add(row);
-                            }
-                        }
+                    rows.addAll(entry.getValue());
+                }
+            }
+            if (filter.isEmpty()) {
+                for (List<?> row : rows) {
+                    ++countGoodLine;
+                    System.out.println(row.get(1) + "" + row);
+                }
+            } else {
+                List<String> tokens = convertToRPN(filter);
+                for (List<?> row : rows) {
+                    if (Filter.evaluate(tokens, row)) {
+                        ++countGoodLine;
+                        airportDataMap.add(row);
                     }
                 }
             }
-
-            for (Map.Entry<String, List<List<Object>>> s : solve.entrySet()) {
-                System.out.println(s.getKey() + s.getValue());
+            for (List<?> airportData : airportDataMap) {
+                System.out.println(airportData.get(1) + "" + airportData);
             }
             long endTime = System.currentTimeMillis();
             long elapsedTimeMs = endTime - startTime;
@@ -104,6 +102,6 @@ public class Main {
             output.append(stack.pop()).append(" ");
         }
         list = new ArrayList<>(Arrays.asList(output.toString().split("\\s+")));
-        return list;
+        return list.stream().map(o -> o.replaceAll("<>", "!")).toList();
     }
 }
