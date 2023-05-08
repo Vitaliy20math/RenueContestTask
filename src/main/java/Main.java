@@ -16,7 +16,7 @@ public class Main {
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
-        Map<String, List<List<?>>> hashMap = CsvReader.readCsvFile(CSV_FILE_PATH);
+        Map<String, List<String[]>> hashMap = CsvReader.readCsvFile(CSV_FILE_PATH);
 
         while (true) {
             System.out.println("Please enter your filter: ");
@@ -27,18 +27,18 @@ public class Main {
             System.out.println("Please enter name airport: ");
             String nameAirport = reader.readLine();
             int countGoodLine = 0;
-            List<List<?>> airportDataMap = new ArrayList<>();
-            List<List<?>> rows = getRowsForAirport(nameAirport, hashMap);
+            List<String[]> airportDataMap = new ArrayList<>();
+            List<String[]> rows = getRowsForAirport(nameAirport, hashMap);
             long startTime = System.currentTimeMillis();
 
             if (filter.isEmpty()) {
-                for (List<?> row : rows) {
+                for (String[] row : rows) {
                     ++countGoodLine;
-                    System.out.printf("%s%s%n", row.get(1), row);
+                    System.out.printf("%s%s%n", row[1], Arrays.toString(row));
                 }
             } else {
                 List<String> tokens = convertToRPN(filter);
-                for (List<?> row : rows) {
+                for (String[] row : rows) {
                     try {
                         if (Filter.evaluate(tokens, row)) {
                             ++countGoodLine;
@@ -49,8 +49,8 @@ public class Main {
                     }
                 }
             }
-            for (List<?> airportData : airportDataMap) {
-                System.out.println(airportData.get(1) + "" + airportData);
+            for (String[] airportData : airportDataMap) {
+                System.out.println(airportData[1] + "" + Arrays.stream(airportData).toList());
             }
             long endTime = System.currentTimeMillis();
             long elapsedTimeMs = endTime - startTime;
@@ -101,13 +101,14 @@ public class Main {
         while (!stack.isEmpty()) {
             output.append(stack.pop()).append(" ");
         }
+
         list = new ArrayList<>(Arrays.asList(output.toString().split("\\s+")));
         return list.stream().map(o -> o.replaceAll("<>", "!")).toList();
     }
 
-    private static List<List<?>> getRowsForAirport(String airportName, Map<String, List<List<?>>> data) {
-        List<List<?>> rows = new ArrayList<>();
-        for (Map.Entry<String, List<List<?>>> entry : data.entrySet()) {
+    private static List<String[]> getRowsForAirport(String airportName, Map<String, List<String[]>> data) {
+        List<String[]> rows = new ArrayList<>();
+        for (Map.Entry<String, List<String[]>> entry : data.entrySet()) {
             if (entry.getKey().replaceAll("\"", "").startsWith(airportName)) {
                 rows.addAll(entry.getValue());
             }
