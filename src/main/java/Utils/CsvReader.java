@@ -1,5 +1,5 @@
+package Utils;
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -20,13 +20,6 @@ public class CsvReader {
                 String key = columns[1];
                 hashMap.putIfAbsent(key, new ArrayList<>());
                 hashMap.get(key).add(data);
-                /*if (hashMap.containsKey(key)) {
-                    hashMap.get(key).add(data);
-                } else {
-                    List<List<?>> list = new LinkedList<>();
-                    list.add(data);
-                    hashMap.put(key, list);
-                }*/
             }
         } catch (IOException e) {
             e.printStackTrace();

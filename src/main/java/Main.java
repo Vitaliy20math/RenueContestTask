@@ -1,3 +1,6 @@
+import Utils.CsvReader;
+import Utils.Filter;
+
 import java.io.*;
 import java.util.*;
 
@@ -25,8 +28,9 @@ public class Main {
             String nameAirport = reader.readLine();
             int countGoodLine = 0;
             List<List<?>> airportDataMap = new ArrayList<>();
-            long startTime = System.currentTimeMillis();
             List<List<?>> rows = new ArrayList<>();
+            long startTime = System.currentTimeMillis();
+
             String key;
             for (Map.Entry<String, List<List<?>>> entry : hashMap.entrySet()) {
                 key = entry.getKey();
@@ -42,9 +46,13 @@ public class Main {
             } else {
                 List<String> tokens = convertToRPN(filter);
                 for (List<?> row : rows) {
-                    if (Filter.evaluate(tokens, row)) {
-                        ++countGoodLine;
-                        airportDataMap.add(row);
+                    try {
+                        if (Filter.evaluate(tokens, row)) {
+                            ++countGoodLine;
+                            airportDataMap.add(row);
+                        }
+                    } catch (Exception e) {
+                        break;
                     }
                 }
             }
