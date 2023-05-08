@@ -28,20 +28,13 @@ public class Main {
             String nameAirport = reader.readLine();
             int countGoodLine = 0;
             List<List<?>> airportDataMap = new ArrayList<>();
-            List<List<?>> rows = new ArrayList<>();
+            List<List<?>> rows = getRowsForAirport(nameAirport, hashMap);
             long startTime = System.currentTimeMillis();
 
-            String key;
-            for (Map.Entry<String, List<List<?>>> entry : hashMap.entrySet()) {
-                key = entry.getKey();
-                if (key.replaceAll("\"", "").startsWith(nameAirport)) {
-                    rows.addAll(entry.getValue());
-                }
-            }
             if (filter.isEmpty()) {
                 for (List<?> row : rows) {
                     ++countGoodLine;
-                    System.out.println(row.get(1) + "" + row);
+                    System.out.printf("%s%s%n", row.get(1), row);
                 }
             } else {
                 List<String> tokens = convertToRPN(filter);
@@ -65,13 +58,12 @@ public class Main {
         }
     }
 
-    private static final Map<String, Integer> precedence = Map.of(
-            "(", 1,
-            "&", 2,
-            "||", 3
-    );
-
     public static List<String> convertToRPN(String expression) {
+        Map<String, Integer> precedence = Map.of(
+                "(", 1,
+                "&", 2,
+                "||", 3
+        );
         Stack<String> stack = new Stack<>();
         List<String> list;
         String[] tokens = expression.split("(?<=[\\|\\|]{2})|(?=[\\|\\|]{2})|(?<=[\\&])|(?=[\\&])|(?<=[\\(])|(?=[\\(])|(?<=[\\)])|(?=[\\)])");
@@ -111,5 +103,15 @@ public class Main {
         }
         list = new ArrayList<>(Arrays.asList(output.toString().split("\\s+")));
         return list.stream().map(o -> o.replaceAll("<>", "!")).toList();
+    }
+
+    private static List<List<?>> getRowsForAirport(String airportName, Map<String, List<List<?>>> data) {
+        List<List<?>> rows = new ArrayList<>();
+        for (Map.Entry<String, List<List<?>>> entry : data.entrySet()) {
+            if (entry.getKey().replaceAll("\"", "").startsWith(airportName)) {
+                rows.addAll(entry.getValue());
+            }
+        }
+        return rows;
     }
 }
