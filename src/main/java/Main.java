@@ -3,10 +3,12 @@ import Utils.Filter;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 /**
  * Ахкямиев Виталий, май 2023
- * Тестовое задание в компанию Renue
+ * Тестовое задание
  */
 
 public class Main {
@@ -25,23 +27,27 @@ public class Main {
                 break;
             }
             System.out.println("Please enter name airport: ");
+
             String nameAirport = reader.readLine();
-            int countGoodLine = 0;
+            if (nameAirport.isEmpty()) {
+                System.out.println("Имя аэропорта должно быть!");
+                continue;
+            }
+            AtomicLong countGoodLine = new AtomicLong(0);
             List<String[]> airportDataMap = new ArrayList<>();
             List<String[]> rows = getRowsForAirport(nameAirport, hashMap);
-            long startTime = System.currentTimeMillis();
 
+            long startTime = System.currentTimeMillis();
             if (filter.isEmpty()) {
-                for (String[] row : rows) {
-                    ++countGoodLine;
-                    System.out.printf("%s%s%n", row[1], Arrays.toString(row));
-                }
+                countGoodLine.set(rows.size());
+                rows.stream()
+                        .forEach(row -> System.out.println(row[1] + Arrays.stream(row).toList()));
             } else {
                 List<String> tokens = convertToRPN(filter);
                 for (String[] row : rows) {
                     try {
                         if (Filter.evaluate(tokens, row)) {
-                            ++countGoodLine;
+                            countGoodLine.incrementAndGet();
                             airportDataMap.add(row);
                         }
                     } catch (Exception e) {
@@ -54,15 +60,15 @@ public class Main {
             }
             long endTime = System.currentTimeMillis();
             long elapsedTimeMs = endTime - startTime;
-            System.out.printf("Количество найденных строк: %d Время выполнения программы: %d мс %n", countGoodLine, elapsedTimeMs);
+            System.out.printf("Количество найденных строк: %d Время выполнения программы: %d мс %n", countGoodLine.get(), elapsedTimeMs);
         }
     }
 
     public static List<String> convertToRPN(String expression) {
-        Map<String, Integer> precedence = Map.of(
-                "(", 1,
-                "&", 2,
-                "||", 3
+        Map<String, Integer> precedence = Map.ofEntries(
+                Map.entry("(", 1),
+                Map.entry("&", 2),
+                Map.entry("||", 3)
         );
         Stack<String> stack = new Stack<>();
         List<String> list;
@@ -101,18 +107,21 @@ public class Main {
         while (!stack.isEmpty()) {
             output.append(stack.pop()).append(" ");
         }
-
-        list = new ArrayList<>(Arrays.asList(output.toString().split("\\s+")));
-        return list.stream().map(o -> o.replaceAll("<>", "!")).toList();
+        return Arrays.stream(output.toString().split("\\s+"))
+                .map(o -> o.replaceAll("<>", "!"))
+                .collect(Collectors.toList());
     }
 
     private static List<String[]> getRowsForAirport(String airportName, Map<String, List<String[]>> data) {
-        List<String[]> rows = new ArrayList<>();
-        for (Map.Entry<String, List<String[]>> entry : data.entrySet()) {
-            if (entry.getKey().replaceAll("\"", "").startsWith(airportName)) {
-                rows.addAll(entry.getValue());
-            }
-        }
-        return rows;
+        String airportNameLower = airportName.toLowerCase();
+        return data.entrySet().stream()
+                .filter(entry -> {
+                    String keyNormalized = java.text.Normalizer.normalize(entry.getKey(), java.text.Normalizer.Form.NFD);
+                    String keyLower = keyNormalized.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "").toLowerCase();
+                    return keyLower.startsWith("\"" + airportNameLower);
+                })
+                .flatMap(entry -> entry.getValue().stream())  // здесь используем flatMap, чтобы получить список строк
+                .filter(row -> row != null && row.length > 0)
+                .collect(Collectors.toList());
     }
 }
